@@ -16,7 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 const Index = () => {
   const [activeTab, setActiveTab] = useState('challenges');
   const { user, loading: authLoading } = useAuth();
-  const { challenges, progress, isLoading, startChallenge } = useChallenges();
+  const { challenges, progress, isLoading, startChallenge, isStarting } = useChallenges();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -36,10 +36,22 @@ const Index = () => {
       return;
     }
 
-    startChallenge(challengeId);
-    toast({
-      title: "Desafio iniciado!",
-      description: "Boa sorte em seu desafio de QA!",
+    console.log('Starting challenge:', challengeId);
+    startChallenge(challengeId, {
+      onSuccess: () => {
+        toast({
+          title: "Desafio iniciado!",
+          description: "Boa sorte em seu desafio de QA!",
+        });
+      },
+      onError: (error: any) => {
+        console.error('Failed to start challenge:', error);
+        toast({
+          title: "Erro ao iniciar desafio",
+          description: "Tente novamente em alguns instantes.",
+          variant: "destructive",
+        });
+      },
     });
   };
 
@@ -112,9 +124,9 @@ const Index = () => {
                   </div>
                 ))}
               </div>
-            ) : (
+            ) : challenges && challenges.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {challenges?.map((challenge) => (
+                {challenges.map((challenge) => (
                   <ChallengeCard
                     key={challenge.id}
                     challenge={challenge}
@@ -123,6 +135,11 @@ const Index = () => {
                     completedCount={getChallengeCompletionCount(challenge.id)}
                   />
                 ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-gray-600 text-lg">Nenhum desafio encontrado.</p>
+                <p className="text-sm text-gray-500 mt-2">Verifique se o banco de dados está configurado corretamente.</p>
               </div>
             )}
           </TabsContent>

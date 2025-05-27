@@ -22,6 +22,8 @@ interface ChallengeCardProps {
 }
 
 const ChallengeCard = ({ challenge, onStart, isCompleted, completedCount = 0 }: ChallengeCardProps) => {
+  console.log('Rendering ChallengeCard for:', challenge.title);
+  
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'Iniciante':
@@ -46,6 +48,11 @@ const ChallengeCard = ({ challenge, onStart, isCompleted, completedCount = 0 }: 
       default:
         return '📋';
     }
+  };
+
+  const handleStartClick = () => {
+    console.log('Starting challenge:', challenge.id);
+    onStart(challenge.id);
   };
 
   return (
@@ -81,7 +88,7 @@ const ChallengeCard = ({ challenge, onStart, isCompleted, completedCount = 0 }: 
       </div>
       
       <Button 
-        onClick={() => onStart(challenge.id)}
+        onClick={handleStartClick}
         className={`w-full ${isCompleted 
           ? 'bg-green-600 hover:bg-green-700' 
           : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700'

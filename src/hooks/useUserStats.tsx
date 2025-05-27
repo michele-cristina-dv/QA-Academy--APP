@@ -12,13 +12,19 @@ export const useUserStats = () => {
     queryFn: async () => {
       if (!user) return null;
       
+      console.log('Fetching user stats for:', user.id);
       const { data, error } = await supabase
         .from('user_stats')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching user stats:', error);
+        throw error;
+      }
+      
+      console.log('User stats fetched:', data);
       return data;
     },
     enabled: !!user,
@@ -28,6 +34,7 @@ export const useUserStats = () => {
     mutationFn: async (updates: any) => {
       if (!user) throw new Error('User not authenticated');
       
+      console.log('Updating user stats:', updates);
       const { error } = await supabase
         .from('user_stats')
         .update(updates)
@@ -36,7 +43,11 @@ export const useUserStats = () => {
       if (error) throw error;
     },
     onSuccess: () => {
+      console.log('User stats updated successfully');
       queryClient.invalidateQueries({ queryKey: ['userStats', user?.id] });
+    },
+    onError: (error) => {
+      console.error('Error updating user stats:', error);
     },
   });
 
