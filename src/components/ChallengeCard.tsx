@@ -8,10 +8,10 @@ interface Challenge {
   id: string;
   title: string;
   description: string;
-  difficulty: 'Iniciante' | 'Intermediário' | 'Avançado';
+  difficulty: string;
   points: number;
   time_estimate: string;
-  type: 'manual' | 'automated' | 'exploratory';
+  type: string;
 }
 
 interface ChallengeCardProps {
