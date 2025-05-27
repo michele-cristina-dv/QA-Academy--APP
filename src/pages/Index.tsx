@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import UserStats from '@/components/UserStats';
 import ChallengeCard from '@/components/ChallengeCard';
@@ -7,76 +8,65 @@ import BugSimulation from '@/components/BugSimulation';
 import Tutorial from '@/components/Tutorial';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAuth } from '@/hooks/useAuth';
+import { useChallenges } from '@/hooks/useChallenges';
+import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('challenges');
+  const { user, loading: authLoading } = useAuth();
+  const { challenges, progress, isLoading, startChallenge } = useChallenges();
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
-  const challenges = [
-    {
-      id: 1,
-      title: "Teste de Login Básico",
-      description: "Valide os campos de login e senha, testando cenários positivos e negativos. Inclui testes de validação de email e força da senha.",
-      difficulty: "Iniciante" as const,
-      points: 100,
-      timeEstimate: "15 min",
-      completedBy: 1247,
-      type: "manual" as const
-    },
-    {
-      id: 2,
-      title: "Automação com Selenium",
-      description: "Crie scripts automatizados para testar fluxo de compra em e-commerce. Aprenda a configurar drivers e selecionar elementos.",
-      difficulty: "Intermediário" as const,
-      points: 250,
-      timeEstimate: "45 min",
-      completedBy: 843,
-      type: "automated" as const
-    },
-    {
-      id: 3,
-      title: "Teste Exploratório de API",
-      description: "Explore uma API REST sem documentação completa. Encontre endpoints não documentados e valide respostas inesperadas.",
-      difficulty: "Avançado" as const,
-      points: 400,
-      timeEstimate: "60 min",
-      completedBy: 321,
-      type: "exploratory" as const
-    },
-    {
-      id: 4,
-      title: "Teste de Performance",
-      description: "Analise o tempo de resposta de uma aplicação web sob diferentes cargas. Use ferramentas de monitoring para identificar gargalos.",
-      difficulty: "Intermediário" as const,
-      points: 300,
-      timeEstimate: "30 min",
-      completedBy: 567,
-      type: "automated" as const
-    },
-    {
-      id: 5,
-      title: "Bug Hunting Challenge",
-      description: "Encontre o máximo de bugs possível em uma aplicação real em 20 minutos. Técnicas de teste exploratório serão fundamentais.",
-      difficulty: "Avançado" as const,
-      points: 500,
-      timeEstimate: "20 min",
-      completedBy: 156,
-      type: "exploratory" as const
-    },
-    {
-      id: 6,
-      title: "Testes de Usabilidade",
-      description: "Avalie a experiência do usuário em uma interface móvel. Identifique problemas de acessibilidade e navegação.",
-      difficulty: "Iniciante" as const,
-      points: 150,
-      timeEstimate: "25 min",
-      completedBy: 934,
-      type: "manual" as const
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/auth');
     }
-  ];
+  }, [user, authLoading, navigate]);
 
-  const handleStartChallenge = (challengeId: number) => {
-    console.log(`Iniciando desafio ${challengeId}`);
-    // Aqui seria implementada a lógica para iniciar o desafio
+  const handleStartChallenge = (challengeId: string) => {
+    if (!user) {
+      toast({
+        title: "Faça login",
+        description: "Você precisa estar logado para iniciar desafios.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    startChallenge(challengeId);
+    toast({
+      title: "Desafio iniciado!",
+      description: "Boa sorte em seu desafio de QA!",
+    });
+  };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Skeleton className="w-12 h-12 rounded-full mx-auto" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; // Will redirect to auth
+  }
+
+  // Get completed challenge IDs for current user
+  const completedChallengeIds = new Set(
+    progress?.filter(p => p.completed).map(p => p.challenge_id) || []
+  );
+
+  // Calculate completion count for each challenge (mock data for now)
+  const getChallengeCompletionCount = (challengeId: string) => {
+    // This would come from a real query in production
+    return Math.floor(Math.random() * 1000) + 100;
   };
 
   return (
@@ -111,15 +101,30 @@ const Index = () => {
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {challenges.map((challenge) => (
-                <ChallengeCard
-                  key={challenge.id}
-                  challenge={challenge}
-                  onStart={handleStartChallenge}
-                />
-              ))}
-            </div>
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="p-6 bg-white rounded-lg shadow-lg">
+                    <Skeleton className="h-6 w-3/4 mb-4" />
+                    <Skeleton className="h-4 w-full mb-2" />
+                    <Skeleton className="h-4 w-2/3 mb-4" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {challenges?.map((challenge) => (
+                  <ChallengeCard
+                    key={challenge.id}
+                    challenge={challenge}
+                    onStart={handleStartChallenge}
+                    isCompleted={completedChallengeIds.has(challenge.id)}
+                    completedCount={getChallengeCompletionCount(challenge.id)}
+                  />
+                ))}
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="simulation">

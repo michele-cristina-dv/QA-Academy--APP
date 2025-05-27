@@ -1,9 +1,19 @@
 
 import React from 'react';
-import { Trophy, User, BookOpen, Target } from 'lucide-react';
+import { Trophy, User, BookOpen, Target, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
 const Header = () => {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
+  };
+
   return (
     <header className="bg-gradient-to-r from-purple-900 via-blue-900 to-indigo-900 text-white p-6 shadow-2xl">
       <div className="container mx-auto flex items-center justify-between">
@@ -28,10 +38,23 @@ const Header = () => {
             <Trophy className="w-4 h-4 mr-2" />
             Ranking
           </Button>
-          <Button variant="ghost" className="text-white hover:bg-white/10">
-            <User className="w-4 h-4 mr-2" />
-            Perfil
-          </Button>
+          {user ? (
+            <>
+              <Button variant="ghost" className="text-white hover:bg-white/10">
+                <User className="w-4 h-4 mr-2" />
+                Perfil
+              </Button>
+              <Button variant="ghost" className="text-white hover:bg-white/10" onClick={handleSignOut}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Sair
+              </Button>
+            </>
+          ) : (
+            <Button variant="ghost" className="text-white hover:bg-white/10" onClick={() => navigate('/auth')}>
+              <User className="w-4 h-4 mr-2" />
+              Login
+            </Button>
+          )}
         </nav>
       </div>
     </header>
